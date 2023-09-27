@@ -33,21 +33,18 @@ spec:
         workspace: source
       - name: basic-auth
         workspace: basic-auth
-    - name: noop-task
+    - name: build-and-push-image
+      taskRef:
+        name: kaniko
+        kind: Task
       runAfter:
-      - fetch-repository
-      taskSpec:
-        steps:
-        - image: registry.access.redhat.com/ubi9/ubi-micro
-          name: noop-task
-          script: |
-            exit 0
-          workingDir: $(workspaces.source.path)
-        workspaces:
-        - name: source
+        - fetch-repository
       workspaces:
-      - name: source
-        workspace: source
+        - name: source
+          workspace: source
+      params:
+        - name: IMAGE
+          value: $(params.imageUrl):$(params.revision)
     workspaces:
     - name: source
     - name: basic-auth
