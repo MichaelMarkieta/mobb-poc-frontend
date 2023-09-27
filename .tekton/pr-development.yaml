@@ -40,6 +40,11 @@ spec:
       - name: basic-auth
         workspace: basic-auth
     - name: build-and-push-image
+      computeResources:
+        requests:
+          cpu: 1 
+        limits:
+          cpu: 2
       taskRef:
         name: kaniko
         kind: Task
