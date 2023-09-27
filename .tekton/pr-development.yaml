@@ -14,6 +14,12 @@ spec:
     value: '{{ repo_url }}'
   - name: revision
     value: '{{ revision }}'
+  - name: target_branch
+    value: '{{ target_branch }}'
+  - name: repo_name
+    value: '{{ repo_name }}'
+  - name: default_registry
+    value: 'default-route-openshift-image-registry.apps.mm.xhbn.p1.openshiftapps.com'
   pipelineSpec:
     params:
     - name: repo_url
@@ -44,7 +50,7 @@ spec:
           workspace: source
       params:
         - name: IMAGE
-          value: $(params.imageUrl):$(params.revision)
+          value: $(params.default_registry)/$(params.target_branch)/$(params.repo_name):$(params.revision)
     workspaces:
     - name: source
     - name: basic-auth
