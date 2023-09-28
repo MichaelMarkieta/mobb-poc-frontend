@@ -1,16 +1,16 @@
-FROM node:18-alpine3.17 as build
+FROM node:lts-alpine as nodebuilder
 WORKDIR /app
-COPY . /app
+COPY yarn.lock package.json ./
 RUN npm config set proxy http://10.1.12.85:3128
 RUN npm config set proxy http://10.1.12.85:3128
 RUN npm config set https-proxy http://10.1.12.85:3128
 RUN npm config set https-proxy http://10.1.12.85:3128
-RUN npm install
-RUN npm run build
+RUN yarn install
+COPY . .
+RUN npm run build -- --mode production
 
-FROM ubuntu
-RUN apt-get update
-RUN apt-get install nginx -y
-COPY --from=build /app/dist /var/www/html/
-EXPOSE 80
-CMD ["nginx","-g","daemon off;"]
+FROM nginx:stable-alpine
+COPY --from=nodebuilder /app/dist /usr/share/nginx/html
+COPY /etc/nginx/nginx.conf /etc/nginx/nginx.conf
+ENV NGINX_ENTRYPOINT_QUIET_LOGS=1
+CMD ["nginx", "-g", "daemon off;"]
