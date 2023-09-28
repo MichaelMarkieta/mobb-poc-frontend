@@ -2,10 +2,10 @@
 FROM node:16 as build-stage
 WORKDIR /build
 COPY package.json yarn.lock .
-RUN npm config set proxy $HTTP_PROXY
-RUN npm config set proxy $http_proxy
-RUN npm config set https-proxy $HTTPS_PROXY
-RUN npm config set https-proxy $https_proxy
+RUN npm config set proxy http://10.1.12.85:3128
+RUN npm config set proxy http://10.1.12.85:3128
+RUN npm config set https-proxy http://10.1.12.85:3128
+RUN npm config set https-proxy http://10.1.12.85:3128
 RUN npm install
 RUN npm run build
  
