@@ -6,7 +6,8 @@ RUN npm config set proxy http://10.1.12.85:3128
 RUN npm config set proxy http://10.1.12.85:3128
 RUN npm config set https-proxy http://10.1.12.85:3128
 RUN npm config set https-proxy http://10.1.12.85:3128
-RUN npm install && npm run build
+RUN npm install --production="false"
+RUN npm run build
  
 # second stage copies the static dist files and Node server files
 FROM node:16 as production-stage
@@ -17,7 +18,7 @@ RUN npm config set proxy $HTTP_PROXY
 RUN npm config set proxy $http_proxy
 RUN npm config set https-proxy $HTTPS_PROXY
 RUN npm config set https-proxy $https_proxy
-RUN npm install --omit=dev
+RUN npm install --production="true"
 RUN rm -rf build
 
 # open port 3000 and run Node server
