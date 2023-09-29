@@ -110,7 +110,7 @@ spec:
       workingDir: /workspace/source
       command: ["/bin/bash", "-c"]
       args:
-        - |-
-          cd ~/
-          echo "Running: oc new-app --image=$(params.IMAGE) --name=$(params.APP_NAME)"
+        - |
+          set -ex
+          ls
           oc new-app --image=$(params.IMAGE) --name=$(params.APP_NAME)
