@@ -94,6 +94,21 @@ spec:
           value: $(params.target_branch)
         - name: REPO_NAME
           value: $(params.repo_name)
+    - name: create-route-edge
+      taskRef:
+        name: create-route-edge
+        kind: Task
+      runAfter:
+        - apply-deployment
+        - apply-service
+      workspaces:
+        - name: source
+          workspace: source
+      params:
+        - name: NAME
+          value: $(params.repo_name)-pull-$(params.pull_request_number)
+        - name: NAMESPACE
+          value: $(params.target_branch)
     workspaces:
     - name: source
     - name: basic-auth
@@ -206,3 +221,26 @@ spec:
                 port: 80
                 targetPort: 8080
           EOF
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: create-route-edge
+spec: 
+  workspaces:
+  - name: source
+  params:
+    - name: NAME
+      description: The name of the new app to deploy
+      type: string
+    - name: NAMESPACE
+      description: The namespace to deploy this app to
+      type: string
+  steps:
+    - name: create-route-edge
+      image: image-registry.openshift-image-registry.svc.cluster.local:5000/openshift/cli:latest
+      workingDir: /workspace/source
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          oc create route edge --service=$(NAME) --namespace=$(NAMESPACE)
