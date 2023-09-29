@@ -68,9 +68,9 @@ spec:
           workspace: source
       params:
         - name: IMAGE
-          value: $(params.target_branch)-$(params.revision)
-        - name: APP_NAME
           value: $(params.container_registry)/$(params.target_branch)/$(params.repo_name):$(params.revision)
+        - name: APP_NAME
+          value: $(params.target_branch)-$(params.revision)
     workspaces:
     - name: source
     - name: basic-auth
