@@ -5,7 +5,7 @@ metadata:
     pipelinesascode.tekton.dev/max-keep-runs: "5"
     pipelinesascode.tekton.dev/on-event: pull_request
     pipelinesascode.tekton.dev/on-target-branch: development
-    pipelinesascode.tekton.dev/task: '[git-clone, kaniko, openshift-client]'
+    pipelinesascode.tekton.dev/task: '[git-clone, kaniko]'
   name: pipelinerun-pr-development
   namespace: development-pipelines
 spec:
@@ -59,7 +59,7 @@ spec:
           value: $(params.container_registry)/$(params.target_branch)/$(params.repo_name):$(params.revision)
     - name: stage-pr
       taskRef:
-        name: openshift-client
+        name: oc-newapp
         kind: Task
       runAfter:
         - build-and-push-image
@@ -67,8 +67,10 @@ spec:
         - name: source
           workspace: source
       params:
-        - name: SCRIPT
-          value: 'oc new-app --name=$(params.target_branch)-$(params.revision) --image=$(params.container_registry)/$(params.target_branch)/$(params.repo_name):$(params.revision)'
+        - name: IMAGE
+          value: $(params.target_branch)-$(params.revision)
+        - name: APP_NAME
+          value: $(params.container_registry)/$(params.target_branch)/$(params.repo_name):$(params.revision)
     workspaces:
     - name: source
     - name: basic-auth
@@ -84,3 +86,26 @@ spec:
   - name: basic-auth
     secret:
       secretName: '{{ git_auth_secret }}'
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: oc-newapp
+spec: 
+  workspaces:
+  - name: source
+  params:
+    - name: IMAGE
+      description: The full registry path of the image to deploy
+      type: string
+    - name: APP_NAME
+      description: The name of the new app to deploy
+      type: string
+  steps:
+    - name: new-app
+      image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+      workingDir: /workspace/source
+      command: ["/bin/bash", "-c"]
+      args:
+        - |-
+          oc new-app --image=$(params.IMAGE) --name=$(params.APP_NAME)
