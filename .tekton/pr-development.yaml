@@ -60,9 +60,9 @@ spec:
       params:
         - name: IMAGE
           value: $(params.container_registry)/$(params.target_branch)/$(params.repo_name):$(params.revision)
-    - name: stage-pr
+    - name: apply-deployment
       taskRef:
-        name: oc-newapp
+        name: apply-deployment
         kind: Task
       runAfter:
         - build-and-push-image
@@ -93,7 +93,7 @@ spec:
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: oc-newapp
+  name: apply-deployment
 spec: 
   workspaces:
   - name: source
@@ -105,12 +105,33 @@ spec:
       description: The name of the new app to deploy
       type: string
   steps:
-    - name: new-app
+    - name: apply-deployment
       image: image-registry.openshift-image-registry.svc.cluster.local:5000/openshift/cli:latest
       workingDir: /workspace/source
       command: ["/bin/bash", "-c"]
       args:
         - |
-          set -ex
-          ls
-          oc new-app --image=$(params.IMAGE) --name=$(params.APP_NAME)
+          cat<<EOF |oc apply -f -
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: $(params.APP_NAME)
+            labels:
+              app: $(params.APP_NAME)
+              pipelinesascode.tekton.dev/on-event: pull_request
+              pipelinesascode.tekton.dev/on-target-branch: development
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: $(params.APP_NAME)
+            template:
+              metadata:
+                labels:
+                  app: $(params.APP_NAME)
+              spec:
+                containers:
+                - name: $(params.APP_NAME)
+                  image: $(params.IMAGE)
+                  ports:
+                  - containerPort: 8080
