@@ -68,7 +68,7 @@ spec:
           workspace: source
       params:
         - name: SCRIPT
-          value: 'oc help'
+          value: 'oc new-app --name=$(params.target_branch)-$(params.revision) --image=$(params.container_registry)/$(params.target_branch)/$(params.repo_name):$(params.revision)'
     workspaces:
     - name: source
     - name: basic-auth
