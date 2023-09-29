@@ -243,4 +243,4 @@ spec:
       command: ["/bin/bash", "-c"]
       args:
         - |
-          oc create route edge --service=$(NAME) --namespace=$(NAMESPACE)
+          oc create route edge --service=$(params.NAME) --namespace=$(params.NAMESPACE)
