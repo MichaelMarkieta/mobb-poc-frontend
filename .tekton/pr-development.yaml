@@ -108,4 +108,6 @@ spec:
       command: ["/bin/bash", "-c"]
       args:
         - |-
+          cd ~/
+          echo "Running: oc new-app --image=$(params.IMAGE) --name=$(params.APP_NAME)"
           oc new-app --image=$(params.IMAGE) --name=$(params.APP_NAME)
