@@ -121,7 +121,6 @@ spec:
       command: ["/bin/bash", "-c"]
       args:
         - |
-          set -ex
           cat<<EOF |oc apply -f -
           apiVersion: apps/v1
           kind: Deployment
@@ -136,11 +135,11 @@ spec:
             replicas: 1
             selector:
               matchLabels:
-                name: $(params.NAME)
+                app: $(params.NAME)
             template:
               metadata:
                 labels:
-                  name: $(params.NAME)
+                  app: $(params.NAME)
               spec:
                 containers:
                 - name: $(params.NAME)
