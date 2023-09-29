@@ -225,7 +225,7 @@ spec:
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: create-route-edge
+  name: apply-route-edge
 spec: 
   workspaces:
   - name: source
