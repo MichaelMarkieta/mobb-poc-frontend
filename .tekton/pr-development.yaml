@@ -23,6 +23,13 @@ spec:
   - name: container_registry
     value: 'image-registry.openshift-image-registry.svc.cluster.local:5000'
   pipelineSpec:
+    params:
+    - name: repo_url
+    - name: revision
+    - name: target_branch
+    - name: source_branch
+    - name: repo_name
+    - name: container_registry
     tasks:
     - name: fetch-repository
       params:
