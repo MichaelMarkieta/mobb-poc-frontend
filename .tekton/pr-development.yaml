@@ -5,7 +5,7 @@ metadata:
     pipelinesascode.tekton.dev/max-keep-runs: "5"
     pipelinesascode.tekton.dev/on-event: pull_request
     pipelinesascode.tekton.dev/on-target-branch: development
-    pipelinesascode.tekton.dev/task: '[git-clone, kaniko, oc]'
+    pipelinesascode.tekton.dev/task: '[git-clone, kaniko]'
   name: pipelinerun-pr-development
   namespace: development
 spec:
@@ -18,7 +18,7 @@ spec:
     value: '{{ target_branch }}'
   - name: repo_name
     value: '{{ repo_name }}'
-  - name: default_registry
+  - name: container_registry
     value: 'default-route-openshift-image-registry.apps.mm.xhbn.p1.openshiftapps.com'
   pipelineSpec:
     params:
@@ -50,19 +50,7 @@ spec:
           workspace: source
       params:
         - name: IMAGE
-          value: $(params.default_registry)/$(params.target_branch)/$(params.repo_name):$(params.revision)
-    - name: new-app
-      taskRef:
-        name: oc
-        kind: Task
-      runAfter:
-        - build-and-push-image
-      workspaces:
-        - name: source
-          workspace: source
-      params:
-        - name: SCRIPT
-          value: oc new-app --image $(params.default_registry)/$(params.target_branch)/$(params.repo_name):$(params.revision)
+          value: $(params.container_registry)/$(params.target_branch)/$(params.repo_name):$(params.revision)
     workspaces:
     - name: source
     - name: basic-auth
