@@ -72,8 +72,10 @@ spec:
       params:
         - name: IMAGE
           value: $(tasks.build-and-push-image.results.IMAGE_URL)
-        - name: APP_NAME
+        - name: NAME
           value: $(params.repo_name)-pull-$(params.pull_request_number)
+        - name: NAMESPACE
+          value: $(params.target_branch)
     workspaces:
     - name: source
     - name: basic-auth
@@ -101,8 +103,11 @@ spec:
     - name: IMAGE
       description: The full registry path of the image to deploy
       type: string
-    - name: APP_NAME
+    - name: NAME
       description: The name of the new app to deploy
+      type: string
+    - name: NAMESPACE
+      description: The namespace to deploy this app to
       type: string
   steps:
     - name: apply-deployment
@@ -115,23 +120,24 @@ spec:
           apiVersion: apps/v1
           kind: Deployment
           metadata:
-            name: $(params.APP_NAME)
+            name: $(params.NAME)
+            namespace: $(params.NAMESPACE)
             labels:
-              app: $(params.APP_NAME)
+              app: $(params.NAME)
               pipelinesascode.tekton.dev/on-event: pull_request
               pipelinesascode.tekton.dev/on-target-branch: development
           spec:
             replicas: 1
             selector:
               matchLabels:
-                app: $(params.APP_NAME)
+                app: $(params.NAME)
             template:
               metadata:
                 labels:
-                  app: $(params.APP_NAME)
+                  app: $(params.NAME)
               spec:
                 containers:
-                - name: $(params.APP_NAME)
+                - name: $(params.NAME)
                   image: $(params.IMAGE)
                   ports:
                   - containerPort: 8080
