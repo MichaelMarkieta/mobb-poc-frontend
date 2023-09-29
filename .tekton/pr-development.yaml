@@ -109,6 +109,8 @@ spec:
           value: $(params.repo_name)-pull-$(params.pull_request_number)
         - name: NAMESPACE
           value: $(params.target_branch)
+        - name: REPO_NAME
+          value: $(params.repo_name)
     workspaces:
     - name: source
     - name: basic-auth
@@ -235,6 +237,9 @@ spec:
       type: string
     - name: NAMESPACE
       description: The namespace to deploy this app to
+      type: string
+    - name: REPO_NAME
+      description: The repository name this service is based on
       type: string
   steps:
     - name: apply-route-edge
