@@ -14,6 +14,8 @@ spec:
     value: '{{ repo_url }}'
   - name: revision
     value: '{{ revision }}'
+  - name: pull_request_number
+    value: '{{ pull_request_number }}'
   - name: target_branch
     value: '{{ target_branch }}'
   - name: source_branch
@@ -26,6 +28,7 @@ spec:
     params:
     - name: repo_url
     - name: revision
+    - name: pull_request_number
     - name: target_branch
     - name: source_branch
     - name: repo_name
@@ -70,7 +73,7 @@ spec:
         - name: IMAGE
           value: $(tasks.build-and-push-image.results.IMAGE_URL)
         - name: APP_NAME
-          value: $(params.repo_name)-$(params.revision)
+          value: $(params.repo_name)-pull-$(params.pull_request_number)
     workspaces:
     - name: source
     - name: basic-auth
