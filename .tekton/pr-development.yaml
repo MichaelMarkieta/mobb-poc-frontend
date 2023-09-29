@@ -68,7 +68,7 @@ spec:
           workspace: source
       params:
         - name: IMAGE
-          value: tasks.build-and-push-image.results.IMAGE_URL
+          value: $(tasks.build-and-push-image.results.IMAGE_URL)
         - name: APP_NAME
           value: $(params.repo_name)-$(params.revision)
     workspaces:
