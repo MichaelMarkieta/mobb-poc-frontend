@@ -94,9 +94,9 @@ spec:
           value: $(params.target_branch)
         - name: REPO_NAME
           value: $(params.repo_name)
-    - name: create-route-edge
+    - name: apply-route-edge
       taskRef:
-        name: create-route-edge
+        name: apply-route-edge
         kind: Task
       runAfter:
         - apply-deployment
