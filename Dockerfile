@@ -5,8 +5,7 @@ RUN yarn install
 COPY . .
 RUN npm run build -- --mode production
 
-FROM nginx:stable-alpine
-COPY --from=nodebuilder /app/dist /usr/share/nginx/html
-COPY /etc/nginx/nginx.conf /etc/nginx/nginx.conf
-ENV NGINX_ENTRYPOINT_QUIET_LOGS=1
-CMD ["nginx", "-g", "daemon off;"]
+FROM registry.access.redhat.com/ubi8/nginx-122
+COPY --from=nodebuilder /app/dist ./
+EXPOSE 8080
+CMD nginx -g "daemon off;"

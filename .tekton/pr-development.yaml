@@ -103,7 +103,7 @@ spec:
       type: string
   steps:
     - name: new-app
-      image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+      image: image-registry.openshift-image-registry.svc.cluster.local:5000/openshift/cli:latest
       workingDir: /workspace/source
       command: ["/bin/bash", "-c"]
       args:
