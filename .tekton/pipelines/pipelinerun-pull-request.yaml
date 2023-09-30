@@ -75,6 +75,8 @@ spec:
           value: rox-secrets
         - name: output_format
           value: table
+        - name: insecure-skip-tls-verify
+          value: true
     - name: apply-deployment
       taskRef:
         name: apply-deployment
