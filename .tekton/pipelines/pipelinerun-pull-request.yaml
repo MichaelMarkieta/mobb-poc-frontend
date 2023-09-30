@@ -5,7 +5,7 @@ metadata:
     pipelinesascode.tekton.dev/max-keep-runs: "5"
     pipelinesascode.tekton.dev/on-event: pull_request
     pipelinesascode.tekton.dev/on-target-branch: '[development, useracceptance, main]'
-    pipelinesascode.tekton.dev/task: '[git-clone, kaniko, stackrox-image-scan]'
+    pipelinesascode.tekton.dev/task: '[git-clone, kaniko]'
   name: pipelinerun-pr-development
   namespace: development-pipelines
 spec:
@@ -65,7 +65,7 @@ spec:
         name: apply-deployment
         kind: Task
       runAfter:
-        - image-scan
+        - build-and-push-image
       workspaces:
         - name: source
           workspace: source
@@ -83,7 +83,7 @@ spec:
         name: apply-service
         kind: Task
       runAfter:
-        - image-scan
+        - build-and-push-image
       workspaces:
         - name: source
           workspace: source
