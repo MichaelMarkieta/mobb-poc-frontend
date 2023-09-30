@@ -62,8 +62,8 @@ spec:
           value: $(params.container_registry)/$(params.target_branch)/$(params.repo_name):$(params.revision)
     - name: image-scan
       taskRef:
-        name: rox-image-scan
-        kind: ClusterTask
+        name: stackrox-image-scan
+        kind: Task
       runAfter:
         - build-and-push-image
       params:
