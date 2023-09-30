@@ -60,23 +60,6 @@ spec:
       params:
         - name: IMAGE
           value: $(params.container_registry)/$(params.target_branch)/$(params.repo_name):$(params.revision)
-    - name: image-scan
-      taskRef:
-        name: stackrox-image-scan
-        kind: Task
-      runAfter:
-        - build-and-push-image
-      params:
-        - name: image
-          value: $(tasks.build-and-push-image.results.IMAGE_URL)
-        - name: rox_api_token
-          value: rox-secrets
-        - name: rox_central_endpoint
-          value: rox-secrets
-        - name: output_format
-          value: table
-        - name: insecure-skip-tls-verify
-          value: true
     - name: apply-deployment
       taskRef:
         name: apply-deployment
