@@ -53,7 +53,7 @@ spec:
         name: kaniko
         kind: Task
       runAfter:
-        - fetch-repository
+        - clone-repository
       workspaces:
         - name: source
           workspace: source
