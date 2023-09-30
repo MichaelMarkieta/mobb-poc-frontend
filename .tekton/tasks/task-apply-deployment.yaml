@@ -2,9 +2,9 @@ apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
   name: apply-deployment
-spec: 
+spec:
   workspaces:
-  - name: source
+    - name: source
   params:
     - name: IMAGE
       description: The full registry path of the image to deploy
