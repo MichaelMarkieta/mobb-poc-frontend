@@ -120,11 +120,13 @@ spec:
         runAfter:
           - apply-route
         workspaces:
+          - name: output
+            workspace: source
           - name: basic-auth
             workspace: basic-auth
         params:
           - name: COMMENT_OR_FILE
-            value: "Pipeline succesfully run and staged service for preview: https://$(params.repo_name)-pull-$(params.pull_request_number)-$(params.target_branch).apps.mm-public.cfpb.p1.openshiftapps.com"
+            value: "PR staged at https://$(params.repo_name)-pull-$(params.pull_request_number)-$(params.target_branch).apps.mm-public.cfpb.p1.openshiftapps.com"
           - name: REQUEST_URL
             value: $(params.request_url)
           - name: REPO_NAME
