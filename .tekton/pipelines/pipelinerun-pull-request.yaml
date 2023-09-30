@@ -1,0 +1,143 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  annotations:
+    pipelinesascode.tekton.dev/max-keep-runs: "5"
+    pipelinesascode.tekton.dev/on-event: pull_request
+    pipelinesascode.tekton.dev/on-target-branch: '[development, useracceptance, main]'
+    pipelinesascode.tekton.dev/task: '[git-clone, kaniko, stackrox-image-scan]'
+  name: pipelinerun-pr-development
+  namespace: development-pipelines
+spec:
+  params:
+  - name: repo_url
+    value: '{{ repo_url }}'
+  - name: revision
+    value: '{{ revision }}'
+  - name: pull_request_number
+    value: '{{ pull_request_number }}'
+  - name: target_branch
+    value: '{{ target_branch }}'
+  - name: source_branch
+    value: '{{ source_branch }}'
+  - name: repo_name
+    value: '{{ repo_name }}'
+  - name: container_registry
+    value: 'image-registry.openshift-image-registry.svc.cluster.local:5000'
+  pipelineSpec:
+    params:
+    - name: repo_url
+    - name: revision
+    - name: pull_request_number
+    - name: target_branch
+    - name: source_branch
+    - name: repo_name
+    - name: container_registry
+    tasks:
+    - name: clone-repository
+      taskRef:
+        kind: ClusterTask
+        name: git-clone
+      workspaces:
+      - name: output
+        workspace: source
+      - name: basic-auth
+        workspace: basic-auth
+      params:
+      - name: url
+        value: $(params.repo_url)
+      - name: revision
+        value: $(params.revision)
+    - name: build-and-push-image
+      taskRef:
+        name: kaniko
+        kind: Task
+      runAfter:
+        - fetch-repository
+      workspaces:
+        - name: source
+          workspace: source
+      params:
+        - name: IMAGE
+          value: $(params.container_registry)/$(params.target_branch)/$(params.repo_name):$(params.revision)
+    - name: image-scan
+      taskRef:
+        name: rox-image-scan
+        kind: ClusterTask
+      runAfter:
+        - build-and-push-image
+      params:
+        - name: image
+          value: $(tasks.build-and-push-image.results.IMAGE_URL)
+        - name: rox_api_token
+          value: rox-secrets
+        - name: rox_central_endpoint
+          value: rox-secrets
+        - name: output_format
+          value: pretty
+    - name: apply-deployment
+      taskRef:
+        name: apply-deployment
+        kind: Task
+      runAfter:
+        - image-scan
+      workspaces:
+        - name: source
+          workspace: source
+      params:
+        - name: IMAGE
+          value: $(tasks.build-and-push-image.results.IMAGE_URL)
+        - name: NAME
+          value: $(params.repo_name)-pull-$(params.pull_request_number)
+        - name: NAMESPACE
+          value: $(params.target_branch)
+        - name: REPO_NAME
+          value: $(params.repo_name)
+    - name: apply-service
+      taskRef:
+        name: apply-service
+        kind: Task
+      runAfter:
+        - image-scan
+      workspaces:
+        - name: source
+          workspace: source
+      params:
+        - name: NAME
+          value: $(params.repo_name)-pull-$(params.pull_request_number)
+        - name: NAMESPACE
+          value: $(params.target_branch)
+        - name: REPO_NAME
+          value: $(params.repo_name)
+    - name: apply-route
+      taskRef:
+        name: apply-route
+        kind: Task
+      runAfter:
+        - apply-deployment
+        - apply-service
+      workspaces:
+        - name: source
+          workspace: source
+      params:
+        - name: NAME
+          value: $(params.repo_name)-pull-$(params.pull_request_number)
+        - name: NAMESPACE
+          value: $(params.target_branch)
+        - name: REPO_NAME
+          value: $(params.repo_name)
+    workspaces:
+    - name: source
+    - name: basic-auth
+  workspaces:
+  - name: source
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+  - name: basic-auth
+    secret:
+      secretName: '{{ git_auth_secret }}'

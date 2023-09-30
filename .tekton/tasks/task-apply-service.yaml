@@ -1,0 +1,42 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: apply-service
+spec: 
+  workspaces:
+  - name: source
+  params:
+    - name: NAME
+      description: The name of the new app to deploy
+      type: string
+    - name: NAMESPACE
+      description: The namespace to deploy this app to
+      type: string
+    - name: REPO_NAME
+      description: The repository name this service is based on
+      type: string
+  steps:
+    - name: apply-service
+      image: image-registry.openshift-image-registry.svc.cluster.local:5000/openshift/cli:latest
+      workingDir: /workspace/source
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          cat<<EOF |oc apply -f -
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: $(params.NAME)
+            namespace: $(params.NAMESPACE)
+            labels:
+              repo_name: $(params.REPO_NAME)
+              pipelinesascode.tekton.dev/on-event: pull_request
+              pipelinesascode.tekton.dev/on-target-branch: $(params.NAMESPACE)
+          spec:
+            selector:
+              app: $(params.NAME)
+            ports:
+              - protocol: TCP
+                port: 80
+                targetPort: 8080
+          EOF
