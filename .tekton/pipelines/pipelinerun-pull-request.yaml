@@ -74,7 +74,7 @@ spec:
         - name: rox_central_endpoint
           value: rox-secrets
         - name: output_format
-          value: pretty
+          value: table
     - name: apply-deployment
       taskRef:
         name: apply-deployment
