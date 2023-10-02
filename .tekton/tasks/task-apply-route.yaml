@@ -17,7 +17,7 @@ spec:
       type: string
   steps:
     - name: apply-route
-      image: openshift4/ose-client
+      image: registry.redhat.io/openshift4/ose-cli
       workingDir: /workspace/source
       command: ["/bin/bash", "-c"]
       args:
