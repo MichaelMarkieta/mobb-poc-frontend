@@ -112,7 +112,7 @@
   right: 0;
   top: 40%;
   z-index: 1;
-  animation: intro 6s ease-out 1s;
+  animation: intro 3s ease-out 1s;
   color: rgb(75, 213, 238);
   font-weight: 400;
   font-size: 300%;
@@ -144,7 +144,7 @@
   top: 25%;
   z-index: 1;
   margin: auto;
-  animation: logo 9s ease-out 9s;
+  animation: logo 4s ease-out 4s;
   opacity: 0;
 }
 
