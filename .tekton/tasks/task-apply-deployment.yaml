@@ -20,7 +20,7 @@ spec:
       type: string
   steps:
     - name: apply-deployment
-      image: image-registry.openshift-image-registry.svc.cluster.local:5000/openshift/cli:latest
+      image: openshift4/ose-client
       workingDir: /workspace/source
       command: ["/bin/bash", "-c"]
       args:
