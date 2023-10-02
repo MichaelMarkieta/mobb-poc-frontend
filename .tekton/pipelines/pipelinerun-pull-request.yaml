@@ -136,7 +136,7 @@ spec:
           - name: GITHUB_TOKEN_SECRET_NAME
             value: $(params.git_auth_secret)
           - name: GITHUB_TOKEN_SECRET_KEY
-            value: token
+            value: git-provider-token
     workspaces:
       - name: source
       - name: basic-auth
