@@ -4,7 +4,7 @@ metadata:
   annotations:
     pipelinesascode.tekton.dev/max-keep-runs: "5"
     pipelinesascode.tekton.dev/on-event: push
-    pipelinesascode.tekton.dev/on-target-branch: "[development, useracceptance, main]"
+    pipelinesascode.tekton.dev/on-target-branch: "[refs/heads/development, refs/heads/useracceptance, refs/heads/main]"
     pipelinesascode.tekton.dev/task: "[git-clone, yq, git-cli, github-open-pr]"
   name: pipelinerun-push-development
   namespace: development-pipelines
