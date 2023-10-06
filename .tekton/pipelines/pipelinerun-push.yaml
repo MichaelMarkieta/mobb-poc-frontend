@@ -82,7 +82,7 @@ spec:
           - name: GIT_USER_EMAIL
             value: "markieta@redhat.com"
           - name: GIT_SCRIPT
-            value: 'git checkout -b update-$(params.repo_name)-$(params.target_branch) && git add ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml && git commit -m "update $(params.target_branch)" && git push -u origin update-$(params.repo_name)-$(params.target_branch)'
+            value: 'ls -al && git checkout -b update-$(params.repo_name)-$(params.target_branch) && git add ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml && git commit -m "update $(params.target_branch)" && git push -u origin update-$(params.repo_name)-$(params.target_branch)'
       - name: open-pr-in-ops-repo
         taskRef:
           name: github-open-pr
