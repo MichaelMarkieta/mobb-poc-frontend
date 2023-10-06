@@ -64,9 +64,6 @@ spec:
             value: |
               #!/usr/bin/env sh
               set -ex
-              echo $(params.repo_name)
-              echo $(params.revision)
-              echo $(params.target_branch)
               /usr/bin/yq eval -i 'with(.images ; filter(.name == "$(params.repo_name)").[] | .newTag = "$(params.revision)")' ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
       - name: checkout-branch
         taskRef:
@@ -75,7 +72,7 @@ spec:
         runAfter:
           - kustomize-image
         workspaces:
-          - name: output
+          - name: source
             workspace: source
           - name: basic-auth
             workspace: basic-auth
@@ -93,7 +90,7 @@ spec:
         runAfter:
           - checkout-branch
         workspaces:
-          - name: output
+          - name: source
             workspace: source
           - name: basic-auth
             workspace: basic-auth
