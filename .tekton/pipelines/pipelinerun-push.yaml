@@ -106,9 +106,13 @@ spec:
           - name: TITLE
             value: "Update $(params.target_branch)"
           - name: GITHUB_TOKEN_SECRET_NAME
-            value: $(params.git_auth_secret)
+            value: github
           - name: GITHUB_TOKEN_SECRET_KEY
-            value: git-provider-token
+            value: token
+          # - name: GITHUB_TOKEN_SECRET_NAME
+          #   value: $(params.git_auth_secret)
+          # - name: GITHUB_TOKEN_SECRET_KEY
+          #   value: git-provider-token
     workspaces:
       - name: source
       - name: basic-auth
