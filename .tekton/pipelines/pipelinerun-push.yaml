@@ -21,7 +21,7 @@ spec:
     - name: container_registry
       value: "image-registry.openshift-image-registry.svc.cluster.local:5000"
     - name: ops_repository
-      value: "https://github.com/MichaelMarkieta/mobb-poc-ops.git"
+      value: "https://github.com/MichaelMarkieta/mobb-poc-ops"
     - name: git_auth_secret
       value: "{{ git_auth_secret }}"
   pipelineSpec:
@@ -105,6 +105,10 @@ spec:
             value: "Update $(params.target_branch)"
           - name: TITLE
             value: "Update $(params.target_branch)"
+          # - name: GITHUB_TOKEN_SECRET_NAME
+          #   value: github
+          # - name: GITHUB_TOKEN_SECRET_KEY
+          #   value: token
           - name: GITHUB_TOKEN_SECRET_NAME
             value: github
           - name: GITHUB_TOKEN_SECRET_KEY
