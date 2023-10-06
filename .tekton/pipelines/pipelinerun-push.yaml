@@ -58,9 +58,10 @@ spec:
           - name: source
             workspace: source
         params:
+          - name: image
+            value: docker.io/mikefarah/yq:4.35.2
           - name: SCRIPT
             value: |
-              set -ex
               /usr/bin/yq eval -i "with(.images ; filter(.name == \"$(params.repo_name)\").[] | .newTag = \"$(params.revision)\")" ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
       - name: checkout-branch
         taskRef:
