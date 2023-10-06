@@ -96,7 +96,7 @@ spec:
             workspace: basic-auth
         params:
           - name: REPO_FULL_NAME
-            value: "MichaelMarkieta/$(params.repo_name)"
+            value: "MichaelMarkieta/mobb-poc-ops"
           - name: HEAD
             value: "update-$(params.repo_name)-$(params.target_branch)"
           - name: BASE
