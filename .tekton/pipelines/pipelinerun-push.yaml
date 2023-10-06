@@ -60,6 +60,7 @@ spec:
         params:
           - name: SCRIPT
             value: |
+              set -ex
               yq -ei "with(.images ; filter(.name == \"$(params.repo_name)\").[] | .newTag = \"$(params.revision)\")" ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
       - name: checkout-branch
         taskRef:
