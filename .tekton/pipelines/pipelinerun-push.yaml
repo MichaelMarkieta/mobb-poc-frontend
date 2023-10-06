@@ -53,7 +53,7 @@ spec:
           name: yq
           kind: Task
         runAfter:
-          - clone-repository
+          - clone-ops-repo
         workspaces:
           - name: source
             workspace: source
@@ -64,6 +64,8 @@ spec:
         taskRef:
           kind: ClusterTask
           name: git-cli
+        runAfter:
+          - kustomize-image
         workspaces:
           - name: output
             workspace: source
