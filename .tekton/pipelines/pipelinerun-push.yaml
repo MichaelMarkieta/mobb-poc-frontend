@@ -62,11 +62,12 @@ spec:
             value: docker.io/mikefarah/yq:4.35.2
           - name: SCRIPT
             value: |
+              #!/usr/bin/env sh
               set -ex
               echo $(params.repo_name)
               echo $(params.revision)
               echo $(params.target_branch)
-              /usr/bin/yq eval -i "with(.images ; filter(.name == \"$(params.repo_name)\").[] | .newTag = \"$(params.revision)\")" ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
+              /usr/bin/yq eval -i 'with(.images ; filter(.name == "$(params.repo_name)").[] | .newTag = "$(params.revision)")' ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
       - name: checkout-branch
         taskRef:
           kind: ClusterTask
