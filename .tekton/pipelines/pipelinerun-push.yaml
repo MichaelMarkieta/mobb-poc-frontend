@@ -105,14 +105,12 @@ spec:
             value: "Update $(params.target_branch)"
           - name: TITLE
             value: "Update $(params.target_branch)"
-          # - name: GITHUB_TOKEN_SECRET_NAME
-          #   value: github
-          # - name: GITHUB_TOKEN_SECRET_KEY
-          #   value: token
           - name: GITHUB_TOKEN_SECRET_NAME
             value: github
           - name: GITHUB_TOKEN_SECRET_KEY
             value: token
+          - name: AUTH_TYPE
+            value: Bearer
           # - name: GITHUB_TOKEN_SECRET_NAME
           #   value: $(params.git_auth_secret)
           # - name: GITHUB_TOKEN_SECRET_KEY
