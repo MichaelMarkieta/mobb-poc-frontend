@@ -129,7 +129,7 @@ spec:
             workspace: basic-auth
         params:
           - name: COMMENT_OR_FILE
-            value: "PR [staged](https://$(params.repo_name)-pull-$(params.pull_request_number)-$(params.target_branch).apps.mm-public.cfpb.p1.openshiftapps.com) (cronjob runs at Midnight SGT to delete all staged resources)"
+            value: "PR [staged](https://$(params.repo_name)-pull-$(params.pull_request_number)-$(params.target_branch).apps.mm-public.cfpb.p1.openshiftapps.com) (comment `/retest` if link expires)"
           - name: REQUEST_URL
             value: $(params.request_url)
           - name: REPO_NAME
