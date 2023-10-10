@@ -50,12 +50,32 @@ spec:
             value: $(params.ops_repository)
           - name: revision
             value: main
+      - name: get-build-commit-sha
+        taskRef:
+          kind: ClusterTask
+          name: git-cli
+        runAfter:
+          - clone-ops-repo
+        workspaces:
+          - name: source
+            workspace: source
+          - name: ssh-directory
+            workspace: ssh-directory
+        params:
+          - name: GIT_USER_NAME
+            value: "MichaelMarkieta"
+          - name: GIT_USER_EMAIL
+            value: "markieta@redhat.com"
+          - name: GIT_SCRIPT
+            value: |
+              set -ex
+              git rev-list -n 2 $(params.revision) | tail -n 1 > sha.txt
       - name: kustomize-image
         taskRef:
           name: yq
           kind: Task
         runAfter:
-          - clone-ops-repo
+          - get-build-commit-sha
         workspaces:
           - name: source
             workspace: source
@@ -66,7 +86,8 @@ spec:
             value: |
               #!/usr/bin/env sh
               set -ex
-              /usr/bin/yq eval -i 'with(.images ; filter(.name == "$(params.repo_name)").[] | .newTag = "$(params.revision)")' ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
+              REV=`cat sha.txt`
+              /usr/bin/yq eval -i 'with(.images ; filter(.name == "$(params.repo_name)").[] | .newTag = "$REV")' ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
       - name: push-to-ops-repo
         taskRef:
           kind: ClusterTask
