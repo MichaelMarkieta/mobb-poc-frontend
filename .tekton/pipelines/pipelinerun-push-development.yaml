@@ -111,7 +111,9 @@ spec:
               set -ex
               REV=`cat /workspace/source/sha.txt`
               cd $(params.repo_name_ops)
-              /usr/bin/yq eval -i 'with(.images ; filter(.name == "$(params.repo_name)").[] | .newTag = "$REV")' ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
+              cat apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
+              /usr/bin/yq eval -i 'with(.images ; filter(.name == "$(params.repo_name)").[] | .newTag = "$REV")' apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
+              cat apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
       - name: push-to-ops-repo
         taskRef:
           kind: ClusterTask
@@ -137,7 +139,8 @@ spec:
               git remote add origin git@github.com:$(params.github_organization)/$(params.repo_name_ops).git
               git fetch
               git switch main
-              git add .
+              cat apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
+              git add apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
               git commit -m "update $(params.target_branch) triggered by a PR merge https://github.com/$(params.github_organization)/$(params.repo_name)/commit/$(params.revision)"
               git push origin main
     workspaces:
