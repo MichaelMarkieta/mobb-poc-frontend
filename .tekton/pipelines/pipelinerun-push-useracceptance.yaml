@@ -4,10 +4,10 @@ metadata:
   annotations:
     pipelinesascode.tekton.dev/max-keep-runs: "5"
     pipelinesascode.tekton.dev/on-event: push
-    pipelinesascode.tekton.dev/on-target-branch: "[refs/heads/development, refs/heads/useracceptance, refs/heads/main]"
-    pipelinesascode.tekton.dev/task: "[git-clone, yq, git-cli, github-open-pr]"
-  name: pipelinerun-push-development
-  namespace: development-pipelines
+    pipelinesascode.tekton.dev/on-target-branch: "[refs/heads/useracceptance]"
+    pipelinesascode.tekton.dev/task: "[git-clone, yq, git-cli]"
+  name: pipelinerun-push-useracceptance
+  namespace: useracceptance-pipelines
 spec:
   params:
     - name: repo_url
@@ -67,7 +67,7 @@ spec:
               #!/usr/bin/env sh
               set -ex
               /usr/bin/yq eval -i 'with(.images ; filter(.name == "$(params.repo_name)").[] | .newTag = "$(params.revision)")' ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
-      - name: checkout-branch
+      - name: push-to-ops-repo
         taskRef:
           kind: ClusterTask
           name: git-cli
@@ -89,42 +89,9 @@ spec:
               git config --global --add safe.directory /workspace/source && \
               git remote remove origin && \
               git remote add origin git@github.com:MichaelMarkieta/mobb-poc-ops.git && \
-              git checkout -b $(params.implementation_branch) && \
               git add ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml && \
               git commit -m "update $(params.target_branch) based on $(params.revision)" && \
-              git push -u origin $(params.implementation_branch)
-      - name: open-pr-in-ops-repo
-        taskRef:
-          name: github-open-pr
-          kind: Task
-        runAfter:
-          - checkout-branch
-        workspaces:
-          - name: source
-            workspace: source
-          - name: basic-auth
-            workspace: basic-auth
-        params:
-          - name: REPO_FULL_NAME
-            value: "MichaelMarkieta/mobb-poc-ops"
-          - name: HEAD
-            value: $(params.implementation_branch)
-          - name: BASE
-            value: "main"
-          - name: BODY
-            value: "Update $(params.target_branch)"
-          - name: TITLE
-            value: "Update $(params.target_branch)"
-          - name: GITHUB_TOKEN_SECRET_NAME
-            value: github
-          - name: GITHUB_TOKEN_SECRET_KEY
-            value: token
-          - name: AUTH_TYPE
-            value: Bearer
-          # - name: GITHUB_TOKEN_SECRET_NAME
-          #   value: $(params.git_auth_secret)
-          # - name: GITHUB_TOKEN_SECRET_KEY
-          #   value: git-provider-token
+              git push
     workspaces:
       - name: source
       - name: basic-auth

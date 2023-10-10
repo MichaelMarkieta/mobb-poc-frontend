@@ -1,0 +1,146 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  annotations:
+    pipelinesascode.tekton.dev/max-keep-runs: "5"
+    pipelinesascode.tekton.dev/on-event: push
+    pipelinesascode.tekton.dev/on-target-branch: "[refs/heads/main]"
+    pipelinesascode.tekton.dev/task: "[git-clone, yq, git-cli, github-open-pr]"
+  name: pipelinerun-push-production
+  namespace: production-pipelines
+spec:
+  params:
+    - name: repo_url
+      value: "{{ repo_url }}"
+    - name: revision
+      value: "{{ revision }}"
+    - name: target_branch
+      value: "{{ target_branch }}"
+    - name: repo_name
+      value: "{{ repo_name }}"
+    - name: container_registry
+      value: "image-registry.openshift-image-registry.svc.cluster.local:5000"
+    - name: ops_repository
+      value: "https://github.com/MichaelMarkieta/mobb-poc-ops"
+    - name: git_auth_secret
+      value: "{{ git_auth_secret }}"
+    - name: implementation_branch
+      value: update-{{ target_branch }}-{{ revision }}
+  pipelineSpec:
+    params:
+      - name: repo_url
+      - name: revision
+      - name: target_branch
+      - name: repo_name
+      - name: container_registry
+      - name: ops_repository
+      - name: git_auth_secret
+    tasks:
+      - name: clone-ops-repo
+        taskRef:
+          kind: ClusterTask
+          name: git-clone
+        workspaces:
+          - name: output
+            workspace: source
+          - name: basic-auth
+            workspace: basic-auth
+        params:
+          - name: url
+            value: $(params.ops_repository)
+          - name: revision
+            value: main
+      - name: kustomize-image
+        taskRef:
+          name: yq
+          kind: Task
+        runAfter:
+          - clone-ops-repo
+        workspaces:
+          - name: source
+            workspace: source
+        params:
+          - name: image
+            value: docker.io/mikefarah/yq:4.35.2
+          - name: SCRIPT
+            value: |
+              #!/usr/bin/env sh
+              set -ex
+              /usr/bin/yq eval -i 'with(.images ; filter(.name == "$(params.repo_name)").[] | .newTag = "$(params.revision)")' ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
+      - name: checkout-branch
+        taskRef:
+          kind: ClusterTask
+          name: git-cli
+        runAfter:
+          - kustomize-image
+        workspaces:
+          - name: source
+            workspace: source
+          - name: ssh-directory
+            workspace: ssh-directory
+        params:
+          - name: GIT_USER_NAME
+            value: "MichaelMarkieta"
+          - name: GIT_USER_EMAIL
+            value: "markieta@redhat.com"
+          - name: GIT_SCRIPT
+            value: |
+              set -ex
+              git config --global --add safe.directory /workspace/source && \
+              git remote remove origin && \
+              git remote add origin git@github.com:MichaelMarkieta/mobb-poc-ops.git && \
+              git checkout -b $(params.implementation_branch) && \
+              git add ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml && \
+              git commit -m "update $(params.target_branch) based on $(params.revision)" && \
+              git push -u origin $(params.implementation_branch)
+      - name: open-pr-in-ops-repo
+        taskRef:
+          name: github-open-pr
+          kind: Task
+        runAfter:
+          - checkout-branch
+        workspaces:
+          - name: source
+            workspace: source
+          - name: basic-auth
+            workspace: basic-auth
+        params:
+          - name: REPO_FULL_NAME
+            value: "MichaelMarkieta/mobb-poc-ops"
+          - name: HEAD
+            value: $(params.implementation_branch)
+          - name: BASE
+            value: "main"
+          - name: BODY
+            value: "Update $(params.target_branch)"
+          - name: TITLE
+            value: "Update $(params.target_branch)"
+          - name: GITHUB_TOKEN_SECRET_NAME
+            value: github
+          - name: GITHUB_TOKEN_SECRET_KEY
+            value: token
+          - name: AUTH_TYPE
+            value: Bearer
+          # - name: GITHUB_TOKEN_SECRET_NAME
+          #   value: $(params.git_auth_secret)
+          # - name: GITHUB_TOKEN_SECRET_KEY
+          #   value: git-provider-token
+    workspaces:
+      - name: source
+      - name: basic-auth
+      - name: ssh-directory
+  workspaces:
+    - name: source
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+    - name: basic-auth
+      secret:
+        secretName: "{{ git_auth_secret }}"
+    - name: ssh-directory
+      secret:
+        secretName: github-ssh
