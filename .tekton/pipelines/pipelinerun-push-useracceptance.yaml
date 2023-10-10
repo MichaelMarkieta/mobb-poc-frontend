@@ -91,7 +91,7 @@ spec:
               git remote add origin git@github.com:MichaelMarkieta/mobb-poc-ops.git && \
               git add ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml && \
               git commit -m "update $(params.target_branch) based on $(params.revision)" && \
-              git push
+              git push origin HEAD:main
     workspaces:
       - name: source
       - name: basic-auth
