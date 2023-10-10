@@ -96,7 +96,8 @@ spec:
               git remote add origin git@github.com:$(params.github_organization)/$(params.repo_name).git
               git fetch
               git switch $(params.revision) --detach
-              git rev-list -n 2 $(params.revision) | tail -n 1 > /workspace/source/sha.txt
+              git rev-list -n 2 $(params.revision) > /workspace/source/sha.txt
+              cat /workspace/source/sha.txt
       - name: kustomize-image
         taskRef:
           name: yq
@@ -113,7 +114,7 @@ spec:
             value: |
               #!/usr/bin/env sh
               set -ex
-              export REV=`cat /workspace/source/sha.txt`
+              export REV=`tail -n 1 /workspace/source/sha.txt`
               cd $(params.repo_name_ops)
               /usr/bin/yq eval -i 'with(.images ; filter(.name == "$(params.repo_name)").[] | .newTag = strenv(REV))' apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
       - name: push-to-ops-repo
