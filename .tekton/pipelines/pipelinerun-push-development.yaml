@@ -86,6 +86,7 @@ spec:
             value: |
               #!/usr/bin/env sh
               set -ex
+              git config --global --add safe.directory /workspace/source
               REV=`cat sha.txt`
               /usr/bin/yq eval -i 'with(.images ; filter(.name == "$(params.repo_name)").[] | .newTag = "$REV")' ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
       - name: push-to-ops-repo
@@ -107,11 +108,11 @@ spec:
           - name: GIT_SCRIPT
             value: |
               set -ex
-              git config --global --add safe.directory /workspace/source && \
-              git remote remove origin && \
-              git remote add origin git@github.com:MichaelMarkieta/mobb-poc-ops.git && \
-              git add ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml && \
-              git commit -m "update $(params.target_branch) based on $(params.revision)" && \
+              git config --global --add safe.directory /workspace/source
+              git remote remove origin
+              git remote add origin git@github.com:MichaelMarkieta/mobb-poc-ops.git
+              git add ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
+              git commit -m "update $(params.target_branch) based on $(params.revision)"
               git push origin HEAD:main
     workspaces:
       - name: source
