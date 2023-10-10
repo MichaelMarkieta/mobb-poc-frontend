@@ -69,6 +69,7 @@ spec:
           - name: GIT_SCRIPT
             value: |
               set -ex
+              git config --global --add safe.directory /workspace/source
               git rev-list -n 2 $(params.revision) | tail -n 1 > sha.txt
       - name: kustomize-image
         taskRef:
@@ -86,7 +87,6 @@ spec:
             value: |
               #!/usr/bin/env sh
               set -ex
-              git config --global --add safe.directory /workspace/source
               REV=`cat sha.txt`
               /usr/bin/yq eval -i 'with(.images ; filter(.name == "$(params.repo_name)").[] | .newTag = "$REV")' ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
       - name: push-to-ops-repo
