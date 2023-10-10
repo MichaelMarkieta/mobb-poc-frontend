@@ -89,6 +89,7 @@ spec:
               set -ex
               REV=`cat sha.txt`
               /usr/bin/yq eval -i 'with(.images ; filter(.name == "$(params.repo_name)").[] | .newTag = "$REV")' ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
+              rm sha.txt
       - name: push-to-ops-repo
         taskRef:
           kind: ClusterTask
@@ -111,9 +112,9 @@ spec:
               git config --global --add safe.directory /workspace/source
               git remote remove origin
               git remote add origin git@github.com:MichaelMarkieta/mobb-poc-ops.git
-              git add ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
-              git commit -m "update $(params.target_branch) based on $(params.revision)"
-              git push origin HEAD:main
+              git add .
+              git commit -m "update $(params.target_branch) triggered by a PR merge https://github.com/MichaelMarkieta/$(params.repo_name)/commit/$(params.revision)"
+              git push origin main
     workspaces:
       - name: source
       - name: basic-auth
