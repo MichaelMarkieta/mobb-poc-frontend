@@ -135,7 +135,7 @@ spec:
               git config --global --add safe.directory /workspace/source/$(params.repo_name_ops)
               git remote remove origin
               git remote add origin git@github.com:$(params.github_organization)/$(params.repo_name_ops).git
-              git switch main
+              git switch -c main --track origin/main
               git add .
               git commit -m "update $(params.target_branch) triggered by a PR merge https://github.com/$(params.github_organization)/$(params.repo_name)/commit/$(params.revision)"
               git push origin main
