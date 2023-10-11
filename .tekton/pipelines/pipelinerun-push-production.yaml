@@ -20,12 +20,14 @@ spec:
       value: "{{ repo_name }}"
     - name: container_registry
       value: "image-registry.openshift-image-registry.svc.cluster.local:5000"
-    - name: ops_repository
-      value: "https://github.com/MichaelMarkieta/mobb-poc-ops"
-    - name: git_auth_secret
-      value: "{{ git_auth_secret }}"
+    - name: github_organization
+      value: MichaelMarkieta
+    - name: repo_name_ops
+      value: "mobb-poc-ops"
     - name: implementation_branch
       value: update-{{ target_branch }}-{{ revision }}
+    - name: git_auth_secret
+      value: "{{ git_auth_secret }}"
   pipelineSpec:
     params:
       - name: repo_url
@@ -33,9 +35,29 @@ spec:
       - name: target_branch
       - name: repo_name
       - name: container_registry
-      - name: ops_repository
+      - name: github_organization
+      - name: repo_name_ops
+      - name: implementation_branch
       - name: git_auth_secret
     tasks:
+      - name: clone-app-repo
+        taskRef:
+          kind: ClusterTask
+          name: git-clone
+        workspaces:
+          - name: output
+            workspace: source
+          - name: basic-auth
+            workspace: basic-auth
+        params:
+          - name: subdirectory
+            value: $(params.repo_name)
+          - name: url
+            value: https://github.com/$(params.github_organization)/$(params.repo_name)
+          - name: revision
+            value: $(params.revision)
+          - name: depth
+            value: "2"
       - name: clone-ops-repo
         taskRef:
           kind: ClusterTask
@@ -46,16 +68,41 @@ spec:
           - name: basic-auth
             workspace: basic-auth
         params:
+          - name: subdirectory
+            value: $(params.repo_name_ops)
           - name: url
-            value: $(params.ops_repository)
+            value: https://github.com/$(params.github_organization)/$(params.repo_name_ops)
           - name: revision
             value: main
+      - name: get-build-commit-sha
+        taskRef:
+          kind: ClusterTask
+          name: git-cli
+        runAfter:
+          - clone-app-repo
+          - clone-ops-repo
+        workspaces:
+          - name: source
+            workspace: source
+          - name: ssh-directory
+            workspace: ssh-directory
+        params:
+          - name: GIT_USER_NAME
+            value: "MichaelMarkieta"
+          - name: GIT_USER_EMAIL
+            value: "markieta@redhat.com"
+          - name: GIT_SCRIPT
+            value: |
+              set -ex
+              cd $(params.repo_name)
+              git config --global --add safe.directory /workspace/source/$(params.repo_name)
+              git rev-list -n 2 $(params.revision) | tail -n 1 > /workspace/source/sha.txt
       - name: kustomize-image
         taskRef:
           name: yq
           kind: Task
         runAfter:
-          - clone-ops-repo
+          - get-build-commit-sha
         workspaces:
           - name: source
             workspace: source
@@ -66,7 +113,9 @@ spec:
             value: |
               #!/usr/bin/env sh
               set -ex
-              /usr/bin/yq eval -i 'with(.images ; filter(.name == "$(params.repo_name)").[] | .newTag = "$(params.revision)")' ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
+              export REV=`cat /workspace/source/sha.txt`
+              cd $(params.repo_name_ops)
+              /usr/bin/yq eval -i 'with(.images ; filter(.name == "$(params.repo_name)").[] | .newTag = strenv(REV))' apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
       - name: checkout-branch
         taskRef:
           kind: ClusterTask
@@ -86,12 +135,13 @@ spec:
           - name: GIT_SCRIPT
             value: |
               set -ex
-              git config --global --add safe.directory /workspace/source && \
-              git remote remove origin && \
-              git remote add origin git@github.com:MichaelMarkieta/mobb-poc-ops.git && \
-              git checkout -b $(params.implementation_branch) && \
-              git add ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml && \
-              git commit -m "update $(params.target_branch) based on $(params.revision)" && \
+              cd $(params.repo_name_ops)
+              git config --global --add safe.directory /workspace/source/$(params.repo_name_ops)
+              git remote remove origin
+              git remote add origin git@github.com/$(params.github_organization)/$(params.repo_name_ops).git
+              git checkout -b $(params.implementation_branch)
+              git add ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
+              git commit -m "update $(params.target_branch) based on $(params.revision)"
               git push -u origin $(params.implementation_branch)
       - name: open-pr-in-ops-repo
         taskRef:
@@ -106,7 +156,7 @@ spec:
             workspace: basic-auth
         params:
           - name: REPO_FULL_NAME
-            value: "MichaelMarkieta/mobb-poc-ops"
+            value: "$(params.github_organization)/$(params.repo_name_ops)"
           - name: HEAD
             value: $(params.implementation_branch)
           - name: BASE
@@ -121,10 +171,6 @@ spec:
             value: token
           - name: AUTH_TYPE
             value: Bearer
-          # - name: GITHUB_TOKEN_SECRET_NAME
-          #   value: $(params.git_auth_secret)
-          # - name: GITHUB_TOKEN_SECRET_KEY
-          #   value: git-provider-token
     workspaces:
       - name: source
       - name: basic-auth
