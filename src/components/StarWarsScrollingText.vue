@@ -3,7 +3,7 @@
 
 <template>
   <section class="intro">
-    It was a dark and gloomy day...
+    A long time ago in a galaxy far, far away...
   </section>
 
   <section class="logo">
