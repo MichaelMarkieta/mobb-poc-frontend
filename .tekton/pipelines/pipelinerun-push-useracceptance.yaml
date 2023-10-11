@@ -7,7 +7,7 @@ metadata:
     pipelinesascode.tekton.dev/on-target-branch: "[refs/heads/useracceptance]"
     pipelinesascode.tekton.dev/task: "[git-clone, yq, git-cli]"
   name: pipelinerun-push-useracceptance
-  namespace: useracceptance-pipelines
+  namespace: pipelines
 spec:
   params:
     - name: repo_url

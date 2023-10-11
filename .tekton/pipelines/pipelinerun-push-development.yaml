@@ -7,7 +7,7 @@ metadata:
     pipelinesascode.tekton.dev/on-target-branch: "[refs/heads/development]"
     pipelinesascode.tekton.dev/task: "[git-clone, yq, git-cli]"
   name: pipelinerun-push-development
-  namespace: development-pipelines
+  namespace: pipelines
 spec:
   params:
     - name: repo_url
