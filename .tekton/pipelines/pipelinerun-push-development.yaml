@@ -82,7 +82,7 @@ spec:
             workspace: source
         params:
           - name: CONTEXT
-            value: params.repo_name
+            value: $(params.repo_name)
           - name: IMAGE
             value: $(params.container_registry)/$(params.target_branch)/$(params.repo_name):$(params.revision)
       # - name: get-build-commit-sha
