@@ -4,8 +4,8 @@ metadata:
   annotations:
     pipelinesascode.tekton.dev/max-keep-runs: "5"
     pipelinesascode.tekton.dev/on-event: push
-    pipelinesascode.tekton.dev/on-target-branch: "[refs/heads/main]"
-    pipelinesascode.tekton.dev/task: "[git-clone, yq, git-cli, github-open-pr]"
+    pipelinesascode.tekton.dev/on-target-branch: "[refs/heads/production]"
+    pipelinesascode.tekton.dev/task: "[git-clone, kaniko, yq, git-cli]"
   name: pipelinerun-push-production
   namespace: pipelines
 spec:
@@ -24,8 +24,6 @@ spec:
       value: MichaelMarkieta
     - name: repo_name_ops
       value: "mobb-poc-ops"
-    - name: implementation_branch
-      value: update-{{ target_branch }}-{{ revision }}
     - name: git_auth_secret
       value: "{{ git_auth_secret }}"
   pipelineSpec:
@@ -37,7 +35,6 @@ spec:
       - name: container_registry
       - name: github_organization
       - name: repo_name_ops
-      - name: implementation_branch
       - name: git_auth_secret
     tasks:
       - name: clone-app-repo
@@ -74,35 +71,50 @@ spec:
             value: https://github.com/$(params.github_organization)/$(params.repo_name_ops)
           - name: revision
             value: main
-      - name: get-build-commit-sha
+      - name: build-and-push-image
         taskRef:
-          kind: ClusterTask
-          name: git-cli
+          name: kaniko
+          kind: Task
         runAfter:
           - clone-app-repo
-          - clone-ops-repo
         workspaces:
           - name: source
             workspace: source
-          - name: ssh-directory
-            workspace: ssh-directory
         params:
-          - name: GIT_USER_NAME
-            value: "MichaelMarkieta"
-          - name: GIT_USER_EMAIL
-            value: "markieta@redhat.com"
-          - name: GIT_SCRIPT
-            value: |
-              set -ex
-              cd $(params.repo_name)
-              git config --global --add safe.directory /workspace/source/$(params.repo_name)
-              git rev-list -n 2 $(params.revision) | tail -n 1 > /workspace/source/sha.txt
+          - name: CONTEXT
+            value: $(params.repo_name)
+          - name: IMAGE
+            value: $(params.container_registry)/$(params.target_branch)/$(params.repo_name):$(params.revision)
+      # - name: get-build-commit-sha
+      #   taskRef:
+      #     kind: ClusterTask
+      #     name: git-cli
+      #   runAfter:
+      #     - clone-app-repo
+      #     - clone-ops-repo
+      #   workspaces:
+      #     - name: source
+      #       workspace: source
+      #     - name: ssh-directory
+      #       workspace: ssh-directory
+      #   params:
+      #     - name: GIT_USER_NAME
+      #       value: "MichaelMarkieta"
+      #     - name: GIT_USER_EMAIL
+      #       value: "markieta@redhat.com"
+      #     - name: GIT_SCRIPT
+      #       value: |
+      #         set -ex
+      #         cd $(params.repo_name)
+      #         git config --global --add safe.directory /workspace/source/$(params.repo_name)
+      #         git rev-list -n 2 $(params.revision) | tail -n 1 > /workspace/source/sha.txt
       - name: kustomize-image
         taskRef:
           name: yq
           kind: Task
         runAfter:
-          - get-build-commit-sha
+          - clone-ops-repo
+          - build-and-push-image
         workspaces:
           - name: source
             workspace: source
@@ -113,7 +125,7 @@ spec:
             value: |
               #!/usr/bin/env sh
               set -ex
-              export REV=`cat /workspace/source/sha.txt`
+              export REV=`echo $(tasks.build-and-push-image.results.IMAGE_URL) | grep -o '$(params.repo_name):.*' | cut -f 2 -d :`
               cd $(params.repo_name_ops)
               /usr/bin/yq eval -i 'with(.images ; filter(.name == "$(params.repo_name)").[] | .newTag = strenv(REV))' apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
       - name: checkout-branch
