@@ -148,10 +148,10 @@ spec:
               git config --global --add safe.directory /workspace/source/$(params.repo_name_ops)
               git remote remove origin
               git remote add origin git@github.com/$(params.github_organization)/$(params.repo_name_ops).git
-              git checkout -b $(params.implementation_branch)
+              git checkout -b update-$(params.repo_name)-$(params.revision)
               git add ./apps/$(params.repo_name)/overlays/production/kustomization.yaml
               git commit -m "update production based on $(params.revision)"
-              git push -u origin $(params.implementation_branch)
+              git push -u origin update-$(params.repo_name)-$(params.revision)
       - name: open-pr-in-ops-repo
         taskRef:
           name: github-open-pr
@@ -167,7 +167,7 @@ spec:
           - name: REPO_FULL_NAME
             value: "$(params.github_organization)/$(params.repo_name_ops)"
           - name: HEAD
-            value: $(params.implementation_branch)
+            value: update-$(params.repo_name)-$(params.revision)
           - name: BASE
             value: "main"
           - name: BODY
