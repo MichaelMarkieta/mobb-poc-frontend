@@ -16,8 +16,6 @@ spec:
       value: "{{ revision }}"
     - name: pull_request_number
       value: "{{ pull_request_number }}"
-    - name: target_branch
-      value: "{{ target_branch }}"
     - name: source_branch
       value: "{{ source_branch }}"
     - name: repo_name
@@ -33,7 +31,6 @@ spec:
       - name: repo_url
       - name: revision
       - name: pull_request_number
-      - name: target_branch
       - name: source_branch
       - name: repo_name
       - name: container_registry
@@ -64,7 +61,7 @@ spec:
             workspace: source
         params:
           - name: IMAGE
-            value: $(params.container_registry)/$(params.target_branch)/$(params.repo_name):$(params.revision)
+            value: $(params.container_registry)/production/$(params.repo_name):$(params.revision)
       - name: apply-deployment
         taskRef:
           name: apply-deployment
@@ -80,7 +77,7 @@ spec:
           - name: NAME
             value: $(params.repo_name)-pull-$(params.pull_request_number)
           - name: NAMESPACE
-            value: $(params.target_branch)
+            value: production
           - name: REPO_NAME
             value: $(params.repo_name)
       - name: apply-service
@@ -96,7 +93,7 @@ spec:
           - name: NAME
             value: $(params.repo_name)-pull-$(params.pull_request_number)
           - name: NAMESPACE
-            value: $(params.target_branch)
+            value: production
           - name: REPO_NAME
             value: $(params.repo_name)
       - name: apply-route
@@ -113,7 +110,7 @@ spec:
           - name: NAME
             value: $(params.repo_name)-pull-$(params.pull_request_number)
           - name: NAMESPACE
-            value: $(params.target_branch)
+            value: production
           - name: REPO_NAME
             value: $(params.repo_name)
       - name: send-comment-to-github
@@ -129,7 +126,7 @@ spec:
             workspace: basic-auth
         params:
           - name: COMMENT_OR_FILE
-            value: "PR [staged](https://$(params.repo_name)-pull-$(params.pull_request_number)-$(params.target_branch).apps.mm-public.cfpb.p1.openshiftapps.com) (comment `/retest` if link expires)"
+            value: "PR [staged](https://$(params.repo_name)-pull-$(params.pull_request_number)-production.apps.mm-public.cfpb.p1.openshiftapps.com) (comment `/retest` if link expires)"
           - name: REQUEST_URL
             value: $(params.request_url)
           - name: REPO_NAME
