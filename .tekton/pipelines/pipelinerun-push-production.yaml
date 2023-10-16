@@ -5,7 +5,7 @@ metadata:
     pipelinesascode.tekton.dev/max-keep-runs: "5"
     pipelinesascode.tekton.dev/on-event: push
     pipelinesascode.tekton.dev/on-target-branch: "[refs/heads/main]"
-    pipelinesascode.tekton.dev/task: "[git-clone, kaniko, yq, git-cli]"
+    pipelinesascode.tekton.dev/task: "[git-clone, kaniko, yq, git-cli, github-open-pr]"
   name: pipelinerun-push-production
   namespace: pipelines
 spec:
