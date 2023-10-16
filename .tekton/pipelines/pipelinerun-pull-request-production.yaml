@@ -1,0 +1,152 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  annotations:
+    pipelinesascode.tekton.dev/max-keep-runs: "5"
+    pipelinesascode.tekton.dev/on-event: pull_request
+    pipelinesascode.tekton.dev/on-target-branch: "[main]"
+    pipelinesascode.tekton.dev/task: "[git-clone, kaniko, github-add-comment]"
+  name: pipelinerun-pull-request-production
+  namespace: pipelines
+spec:
+  params:
+    - name: repo_url
+      value: "{{ repo_url }}"
+    - name: revision
+      value: "{{ revision }}"
+    - name: pull_request_number
+      value: "{{ pull_request_number }}"
+    - name: source_branch
+      value: "{{ source_branch }}"
+    - name: repo_name
+      value: "{{ repo_name }}"
+    - name: request_url
+      value: "{{ repo_url }}/pull/{{ pull_request_number }}"
+    - name: container_registry
+      value: "image-registry.openshift-image-registry.svc.cluster.local:5000"
+    - name: git_auth_secret
+      value: "{{ git_auth_secret }}"
+  pipelineSpec:
+    params:
+      - name: repo_url
+      - name: revision
+      - name: pull_request_number
+      - name: source_branch
+      - name: repo_name
+      - name: container_registry
+      - name: git_auth_secret
+    tasks:
+      - name: clone-repository
+        taskRef:
+          kind: ClusterTask
+          name: git-clone
+        workspaces:
+          - name: output
+            workspace: source
+          - name: basic-auth
+            workspace: basic-auth
+        params:
+          - name: url
+            value: $(params.repo_url)
+          - name: revision
+            value: $(params.revision)
+      - name: build-and-push-image
+        taskRef:
+          name: kaniko
+          kind: Task
+        runAfter:
+          - clone-repository
+        workspaces:
+          - name: source
+            workspace: source
+        params:
+          - name: IMAGE
+            value: $(params.container_registry)/production/$(params.repo_name):$(params.revision)
+      - name: apply-deployment
+        taskRef:
+          name: apply-deployment
+          kind: Task
+        runAfter:
+          - build-and-push-image
+        workspaces:
+          - name: source
+            workspace: source
+        params:
+          - name: IMAGE
+            value: $(tasks.build-and-push-image.results.IMAGE_URL)
+          - name: NAME
+            value: $(params.repo_name)-pull-$(params.pull_request_number)
+          - name: NAMESPACE
+            value: production
+          - name: REPO_NAME
+            value: $(params.repo_name)
+      - name: apply-service
+        taskRef:
+          name: apply-service
+          kind: Task
+        runAfter:
+          - build-and-push-image
+        workspaces:
+          - name: source
+            workspace: source
+        params:
+          - name: NAME
+            value: $(params.repo_name)-pull-$(params.pull_request_number)
+          - name: NAMESPACE
+            value: production
+          - name: REPO_NAME
+            value: $(params.repo_name)
+      - name: apply-route
+        taskRef:
+          name: apply-route
+          kind: Task
+        runAfter:
+          - apply-deployment
+          - apply-service
+        workspaces:
+          - name: source
+            workspace: source
+        params:
+          - name: NAME
+            value: $(params.repo_name)-pull-$(params.pull_request_number)
+          - name: NAMESPACE
+            value: production
+          - name: REPO_NAME
+            value: $(params.repo_name)
+      - name: send-comment-to-github
+        taskRef:
+          name: github-add-comment
+          kind: Task
+        runAfter:
+          - apply-route
+        workspaces:
+          - name: output
+            workspace: source
+          - name: basic-auth
+            workspace: basic-auth
+        params:
+          - name: COMMENT_OR_FILE
+            value: "PR [staged](https://$(params.repo_name)-pull-$(params.pull_request_number)-production.apps.mm-public.cfpb.p1.openshiftapps.com) (comment `/retest` if link expires)"
+          - name: REQUEST_URL
+            value: $(params.request_url)
+          - name: REPO_NAME
+            value: $(params.repo_name)
+          - name: GITHUB_TOKEN_SECRET_NAME
+            value: $(params.git_auth_secret)
+          - name: GITHUB_TOKEN_SECRET_KEY
+            value: git-provider-token
+    workspaces:
+      - name: source
+      - name: basic-auth
+  workspaces:
+    - name: source
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+    - name: basic-auth
+      secret:
+        secretName: "{{ git_auth_secret }}"

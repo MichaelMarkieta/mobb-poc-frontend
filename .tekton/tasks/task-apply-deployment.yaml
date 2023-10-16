@@ -1,0 +1,53 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: apply-deployment
+spec:
+  workspaces:
+    - name: source
+  params:
+    - name: IMAGE
+      description: The full registry path of the image to deploy
+      type: string
+    - name: NAME
+      description: The name of the new app to deploy
+      type: string
+    - name: NAMESPACE
+      description: The namespace to deploy this app to
+      type: string
+    - name: REPO_NAME
+      description: The repository name this service is based on
+      type: string
+  steps:
+    - name: apply-deployment
+      image: registry.redhat.io/openshift4/ose-cli
+      workingDir: /workspace/source
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          cat<<EOF |oc apply -f -
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: $(params.NAME)
+            namespace: $(params.NAMESPACE)
+            labels:
+              repo_name: $(params.REPO_NAME)
+              pipelinesascode.tekton.dev/on-event: pull_request
+              pipelinesascode.tekton.dev/on-target-branch: $(params.NAMESPACE)
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: $(params.NAME)
+            template:
+              metadata:
+                labels:
+                  app: $(params.NAME)
+              spec:
+                containers:
+                - name: $(params.NAME)
+                  image: $(params.IMAGE)
+                  ports:
+                  - containerPort: 8080
+          EOF
