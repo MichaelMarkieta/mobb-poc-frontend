@@ -14,8 +14,6 @@ spec:
       value: "{{ repo_url }}"
     - name: revision
       value: "{{ revision }}"
-    - name: target_branch
-      value: "{{ target_branch }}"
     - name: repo_name
       value: "{{ repo_name }}"
     - name: container_registry
@@ -30,7 +28,6 @@ spec:
     params:
       - name: repo_url
       - name: revision
-      - name: target_branch
       - name: repo_name
       - name: container_registry
       - name: github_organization
@@ -84,7 +81,7 @@ spec:
           - name: CONTEXT
             value: $(params.repo_name)
           - name: IMAGE
-            value: $(params.container_registry)/$(params.target_branch)/$(params.repo_name):$(params.revision)
+            value: $(params.container_registry)/production/$(params.repo_name):$(params.revision)
       # - name: get-build-commit-sha
       #   taskRef:
       #     kind: ClusterTask
@@ -127,7 +124,7 @@ spec:
               set -ex
               export REV=`echo $(tasks.build-and-push-image.results.IMAGE_URL) | grep -o '$(params.repo_name):.*' | cut -f 2 -d :`
               cd $(params.repo_name_ops)
-              /usr/bin/yq eval -i 'with(.images ; filter(.name == "$(params.repo_name)").[] | .newTag = strenv(REV))' apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
+              /usr/bin/yq eval -i 'with(.images ; filter(.name == "$(params.repo_name)").[] | .newTag = strenv(REV))' apps/$(params.repo_name)/overlays/production/kustomization.yaml
       - name: checkout-branch
         taskRef:
           kind: ClusterTask
@@ -152,8 +149,8 @@ spec:
               git remote remove origin
               git remote add origin git@github.com/$(params.github_organization)/$(params.repo_name_ops).git
               git checkout -b $(params.implementation_branch)
-              git add ./apps/$(params.repo_name)/overlays/$(params.target_branch)/kustomization.yaml
-              git commit -m "update $(params.target_branch) based on $(params.revision)"
+              git add ./apps/$(params.repo_name)/overlays/production/kustomization.yaml
+              git commit -m "update production based on $(params.revision)"
               git push -u origin $(params.implementation_branch)
       - name: open-pr-in-ops-repo
         taskRef:
@@ -174,9 +171,9 @@ spec:
           - name: BASE
             value: "main"
           - name: BODY
-            value: "Update $(params.target_branch)"
+            value: "Update production"
           - name: TITLE
-            value: "Update $(params.target_branch)"
+            value: "Update production"
           - name: GITHUB_TOKEN_SECRET_NAME
             value: github
           - name: GITHUB_TOKEN_SECRET_KEY
