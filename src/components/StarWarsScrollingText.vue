@@ -3,7 +3,7 @@
 
 <template>
   <section class="intro">
-    A long time ago in a galaxy far, far away...
+    A long time ago in a world far, far away...
   </section>
 
   <section class="logo">
